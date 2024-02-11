@@ -36,6 +36,7 @@ if __name__ == '__main__':
     # Test data set
     # num_records = 330000
 
+    # Create mock user data
     for i in range(num_records):
         f=choice(first_names)
         l=choice(last_names)
@@ -45,14 +46,27 @@ if __name__ == '__main__':
         if i%1000000 == 0:
             print(f'Wrote row {i} for user {e}')
 
+
+    # Write it to disk
     df = pd.DataFrame(all_users)
     df.columns = ['first_name', 'last_name', 'email', 'favorite_color', 'birth_year', 'is_adult']
 
     df.to_csv('table_users.csv', index_label='user_id')
 
-    # =============================================================
+    '''
+    Step 2: For each user, generate some related/child data to summarize with bins and counts. Use
+            a lognormal distribution - educated guess, easy to change later. It decays like this.
+            
+            - _
+            - _
+            - _
+            - _ _
+            - _ _ _
+            - _ _ _ _ _ _ _ _ _
+            -----------------------
+    '''
 
-    # These parameters will make about 168 relations for every 33 users and the
+    # These parameters will make ~168 relations for every 33 users and the
     # relations will be lognormally distributed
     mean, sd = 1.6, 0.45
     s = np.random.lognormal(mean, sd, len(df))
@@ -60,40 +74,25 @@ if __name__ == '__main__':
 
     print(f'\nThere are {sum(relations)} relations')
 
-    # For each relation, create a list of that size with an id on each one (will be user_id)
-    # Then go back and randomly choose from brands to populate the list positions
-    # This will be the table_user_brands table
 
-    # ... then read both tables in, join, report out histogram
-
-
+    # Iterate over users, creating related/child data fo reach user
     user_brand = []
     for idx, i in enumerate(relations):
         user_id = idx
-
-        # Get all the selections for this user
-        # brand_choices = np.random.choice(brands, size=i)
         slice_start = randint(0, num_brands-1-i)
         brand_choices = brands[slice_start: slice_start+i]
 
         ub = list(zip([user_id]*i, brand_choices))
 
-        # ub = [[user_id, 99] for _ in range(i)]
-
         user_brand.extend(ub)
-        # print(f'Created {i} item list for user {user_id}: {ub}')
     
         if user_id%1000000 == 0:
             print(f'Wrote user brands for {idx} with {len(ub)} mappings')
 
-    # print(user_brand)
-
+    # Write out the relations
     user_brand_df = pd.DataFrame(user_brand)
     user_brand_df.columns = ['user_id', 'brand_event_name']
-    # print(user_brand_df)
-
     print('Writing table_user_brands.csv')
     user_brand_df.to_csv('table_user_brands.csv', index_label='user_brand_id')
 
-
-    # Sample with this: https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html
+    # All done. Use the analyze_data.ipynb notebook to do the analysis.
